@@ -2,10 +2,19 @@ package org.filip.sockets;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.filip.Communication.BaseCommunication;
 import org.filip.sockets.interfaces.IHouse;
-import org.filip.sockets.interfaces.IOffice;
+import org.filip.utils.HostUtils;
 
-public class House extends Thread implements IHouse
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class House extends BaseCommunication implements IHouse
 {
     private final int MAX_SEWAGE = 50;
     private int sewage = 0;
@@ -18,18 +27,9 @@ public class House extends Thread implements IHouse
     @Setter
     private int port;
 
-    private IOffice office;
+    private String officeHost;
+    private int officePort;
 
-    public House(IOffice office)
-    {
-        this.office = office;
-    }
-
-    public House(String host, int port)
-    {
-        this.host = host;
-        this.port = port;
-    }
 
     private void createSewage()
     {
@@ -43,27 +43,61 @@ public class House extends Thread implements IHouse
         return sewage;
     }
 
+
     @Override
+    protected void handleRequest(Socket clientSocket) throws IOException
+    {
+        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+        String request = in.readLine();
+
+        if (request.startsWith("gp:"))
+        {
+            int maxCapacity = Integer.parseInt(request.split(":")[1]);
+            int pumpedOut = getPumpOut(maxCapacity);
+            out.println(pumpedOut);
+        }
+    }
+
+    private void requestEmptying() {
+        try {
+            String request = String.format("o:%s,%d", HostUtils.getCurrentDeviceIp(), port);
+            String response = sendRequest(this.officeHost, this.officePort, request);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void run()
     {
-        while(true)
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            try {
+                startServer();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        // Symulacja napełniania szamba
+        while (true)
         {
             try
             {
-                createSewage();
-                Thread.sleep(500);
+                Thread.sleep(1000); // Co 5 sekund zwiększaj poziom
+                sewage++;
 
-                if(sewage >= MAX_SEWAGE)
+                if (sewage > MAX_SEWAGE)
                 {
-                    System.out.println("Sewage is full");
-                    office.order(host, port);
+                    System.out.println("Szambo jest pełne!");
                     break;
                 }
             }
-
-            catch(InterruptedException e)
+            catch (InterruptedException e)
             {
-                e.printStackTrace();
+                break;
             }
         }
     }
