@@ -1,8 +1,5 @@
 package org.filip.Request;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class RequestParser {
 
     public static Object parseRequest(String request) {
