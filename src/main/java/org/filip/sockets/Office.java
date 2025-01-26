@@ -1,5 +1,6 @@
 package org.filip.sockets;
 
+import lombok.Getter;
 import org.filip.Request.OrderRequest;
 import org.filip.Request.RegisterRequest;
 import org.filip.Request.SetRequest;
@@ -38,7 +39,6 @@ public class Office extends Thread implements IOffice
     // Licznik numerów cystern
     private int nextTankerNumber = 1;
 
-    // Wewnętrzne klasy pomocnicze
     private static class TankerDetails
     {
         String host;
@@ -166,7 +166,8 @@ public class Office extends Thread implements IOffice
                 try
                 {
                     // Przygotowanie żądania do cysterny
-                    String jobRequest = RequestSerializer.serializeRequest(order);
+                    var setJobRequest = new SetRequest("sj:", order.getHost(), order.getPort());
+                    String jobRequest = RequestSerializer.serializeRequest(setJobRequest);
 
                     // Wysłanie żądania do cysterny
                     Socket socket = new Socket(entry.getValue().host, entry.getValue().port);
@@ -175,6 +176,8 @@ public class Office extends Thread implements IOffice
 
                     out.println(jobRequest);
                     String response = in.readLine();
+
+                    System.out.println(response);
 
                     socket.close();
 
@@ -219,6 +222,7 @@ public class Office extends Thread implements IOffice
         if (tanker != null)
         {
             tanker.isReady = true;
+
             System.out.println("Cysterna " + number + " gotowa do pracy");
         }
     }

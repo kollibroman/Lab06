@@ -1,8 +1,10 @@
 package org.filip.sockets;
 
+import lombok.SneakyThrows;
 import org.filip.Communication.BaseSocketHandler;
 import org.filip.Request.GetRequest;
 import org.filip.Request.OrderRequest;
+import org.filip.Request.SetRequest;
 import org.filip.parser.RequestParser;
 import org.filip.parser.RequestSerializer;
 import org.filip.sockets.interfaces.IHouse;
@@ -72,13 +74,14 @@ public class House extends BaseSocketHandler implements IHouse
 
             if(Objects.equals(getRequest.getMethod(), "gp:"))
             {
-                requestEmptying();
+                return String.valueOf(getPumpOut(getRequest.getValue()));
             }
         }
         return "-1"; // Nieznane żądanie
     }
 
     // Opróżnianie szamba
+    @SneakyThrows
     public int getPumpOut(int maxCapacity)
     {
         if (sewage <= 0) return 0;
@@ -87,6 +90,7 @@ public class House extends BaseSocketHandler implements IHouse
         sewage -= pumpedOut;
 
         System.out.println("Wypompowano: " + pumpedOut + " z szamba");
+        Thread.sleep(3000);
         resume();
         return pumpedOut;
     }

@@ -10,6 +10,8 @@ import org.filip.parser.RequestSerializer;
 import org.filip.sockets.interfaces.ITanker;
 import org.filip.utils.HostUtils;
 
+import java.util.Objects;
+
 public class Tanker extends BaseSocketHandler implements ITanker
 {
     private final String officeHost;
@@ -39,6 +41,12 @@ public class Tanker extends BaseSocketHandler implements ITanker
         String response = sendRequest(officeHost, officePort, RequestSerializer.serializeRequest(registerRequest));
         currentTankerNumber = Integer.parseInt(response);
         System.out.println("Zarejestrowano cysternę o numerze: " + currentTankerNumber);
+
+        if(currentTankerNumber >= 0)
+        {
+            var setRequest = new SetRequest("sr:", currentTankerNumber);
+            var response2 = sendRequest(officeHost, officePort, RequestSerializer.serializeRequest(setRequest));
+        }
     }
 
     @Override
@@ -50,7 +58,7 @@ public class Tanker extends BaseSocketHandler implements ITanker
         {
             var setRequest = (SetRequest) requestObject;
 
-            if(setRequest.getMethod() == "sj:")
+            if(Objects.equals(setRequest.getMethod(), "sj:"))
             {
                 String houseHost = setRequest.getHost();
                 int housePort = setRequest.getPort();
@@ -71,6 +79,9 @@ public class Tanker extends BaseSocketHandler implements ITanker
 
             String response = sendRequest(houseHost, housePort, RequestSerializer.serializeRequest(pumpOutRequest));
 
+            System.out.println("Dupa");
+            System.out.println(response);
+
             int pumpedVolume = Integer.parseInt(response);
 
             if (pumpedVolume > 0)
@@ -86,7 +97,12 @@ public class Tanker extends BaseSocketHandler implements ITanker
 
                 var setRequest = new SetRequest("sr:", currentTankerNumber);
 
-                sendRequest(officeHost, officePort, RequestSerializer.serializeRequest(setRequest));
+                var response1 = sendRequest(officeHost, officePort, RequestSerializer.serializeRequest(setRequest));
+
+                if ("1".equals(response1))
+                {
+                    System.out.println("Zakończono zlecenie");
+                }
             }
         } catch (Exception e) {
             System.err.println("Błąd podczas realizacji zlecenia: " + e.getMessage());
