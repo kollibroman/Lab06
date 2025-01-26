@@ -1,104 +1,103 @@
 package org.filip.sockets;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.filip.Communication.BaseCommunication;
+import org.filip.Communication.BaseSocketHandler;
+import org.filip.Request.GetRequest;
+import org.filip.Request.OrderRequest;
+import org.filip.parser.RequestParser;
+import org.filip.parser.RequestSerializer;
 import org.filip.sockets.interfaces.IHouse;
-import org.filip.utils.HostUtils;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Objects;
+import java.util.concurrent.*;
 
-public class House extends BaseCommunication implements IHouse
+public class House extends BaseSocketHandler implements IHouse
 {
-    private final int MAX_SEWAGE = 50;
-    private int sewage = 0;
+    private int sewage;
+    private final int maxSewage;
+    private final String officeHost;
+    private final int officePort;
 
-    @Getter
-    @Setter
-    private String host;
+    private boolean isPaused = false;
 
-    @Getter
-    @Setter
-    private int port;
-
-    private String officeHost;
-    private int officePort;
-
-
-    private void createSewage()
+    public House(int port, int maxSewage, String officeHost, int officePort)
     {
-        sewage++;
-    }
-
-    @Override
-    public int getPumpOut(int max)
-    {
-        sewage -= max;
-        return sewage;
+        super(port);
+        this.maxSewage = maxSewage;
+        this.sewage = 0;
+        this.officeHost = officeHost;
+        this.officePort = officePort;
     }
 
 
-    @Override
-    protected void handleRequest(Socket clientSocket) throws IOException
+    public void startSimulation()
     {
-        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-        String request = in.readLine();
-
-        if (request.startsWith("gp:"))
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() ->
         {
-            int maxCapacity = Integer.parseInt(request.split(":")[1]);
-            int pumpedOut = getPumpOut(maxCapacity);
-            out.println(pumpedOut);
-        }
+           if(!isPaused)
+           {
+               sewage += 10;
+
+               if (sewage >= maxSewage)
+               {
+                   requestEmptying();
+                   pause();
+               }
+
+               System.out.println("Poziom szamba: " + sewage);
+           }
+
+        }, 0, 3, TimeUnit.SECONDS);
     }
 
-    private void requestEmptying() {
-        try {
-            String request = String.format("o:%s,%d", HostUtils.getCurrentDeviceIp(), port);
-            String response = sendRequest(this.officeHost, this.officePort, request);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void run()
+    private  void pause()
     {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            try {
-                startServer();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+        isPaused = true;
+    }
 
-        // Symulacja napełniania szamba
-        while (true)
+    private void resume()
+    {
+        isPaused = false;
+    }
+
+    // Obsługa żądań przychodzących na socket
+    @Override
+    protected String handleRequest(String request)
+    {
+        var deserializedRequest = RequestParser.parseRequest(request);
+
+        if(deserializedRequest instanceof GetRequest)
         {
-            try
-            {
-                Thread.sleep(1000); // Co 5 sekund zwiększaj poziom
-                sewage++;
+            var getRequest = (GetRequest) deserializedRequest;
 
-                if (sewage > MAX_SEWAGE)
-                {
-                    System.out.println("Szambo jest pełne!");
-                    break;
-                }
-            }
-            catch (InterruptedException e)
+            if(Objects.equals(getRequest.getMethod(), "gp:"))
             {
-                break;
+                requestEmptying();
             }
         }
+        return "-1"; // Nieznane żądanie
+    }
+
+    // Opróżnianie szamba
+    public int getPumpOut(int maxCapacity)
+    {
+        if (sewage <= 0) return 0;
+
+        int pumpedOut = Math.min(sewage, maxCapacity);
+        sewage -= pumpedOut;
+
+        System.out.println("Wypompowano: " + pumpedOut + " z szamba");
+        resume();
+        return pumpedOut;
+    }
+
+    // Wysłanie zamówienia do biura
+    private void requestEmptying()
+    {
+        var sjRequest = new OrderRequest(this.officeHost, port);
+
+        String response = sendRequest(officeHost, officePort, RequestSerializer.serializeRequest(sjRequest));
+
+        System.out.println("Odpowiedź biura na zamówienie: " + response);
     }
 }

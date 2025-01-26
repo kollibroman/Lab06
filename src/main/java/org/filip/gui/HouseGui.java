@@ -1,20 +1,20 @@
 package org.filip.gui;
 
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import org.filip.sockets.House;
 
 public class HouseGui
 {
     public static void main(String[] args)
     {
-        try(final DatagramSocket socket = new DatagramSocket())
-        {
-            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
-            var ip = socket.getLocalAddress().getHostAddress();
-            System.out.println(ip);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+        int port = 8001;
+        int maxSewage = 50;
+        String officeHost = "localhost";
+        int officePort = 9001;
+
+        House house = new House(port, maxSewage, officeHost, officePort);
+
+        house.startSimulation();
+
+        house.startServer();
     }
 }

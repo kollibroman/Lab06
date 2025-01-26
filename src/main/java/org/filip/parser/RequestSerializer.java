@@ -49,19 +49,19 @@ public class RequestSerializer
         {
             if (method.equals("spi:"))
             {
-                return method + request.getValue1() + "," + request.getValue2();
+                return method + request.getPort() + "," + request.getValue2();
             }
 
             else
             {
-                return method + request.getValue1();
+                return method + request.getPort();
             }
 
         }
 
         else if (method.equals("sj:"))
         {
-            return method + request.getHost() + "," + request.getValue1();
+            return method + request.getHost() + "," + request.getPort();
         }
 
         else

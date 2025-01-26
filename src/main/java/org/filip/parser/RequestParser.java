@@ -1,4 +1,9 @@
-package org.filip.Request;
+package org.filip.parser;
+
+import org.filip.Request.GetRequest;
+import org.filip.Request.OrderRequest;
+import org.filip.Request.RegisterRequest;
+import org.filip.Request.SetRequest;
 
 public class RequestParser {
 

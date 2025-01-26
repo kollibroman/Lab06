@@ -7,7 +7,7 @@ public class SetRequest
 {
     private final String method;
     private String host;
-    private int value1;
+    private int port;
     private int value2;
 
     public SetRequest(String method, int value)
@@ -18,7 +18,7 @@ public class SetRequest
         }
 
         this.method = method;
-        this.value1 = value;
+        this.port = value;
     }
 
     public SetRequest(String method, String host, int value)
@@ -29,10 +29,10 @@ public class SetRequest
         }
         this.method = method;
         this.host = host;
-        this.value1 = value;
+        this.port = value;
     }
 
-    public SetRequest(String method, int value1, int value2)
+    public SetRequest(String method, int port, int value2)
     {
         if (!method.equals("spi:"))
         {
@@ -40,7 +40,7 @@ public class SetRequest
         }
 
         this.method = method;
-        this.value1 = value1;
+        this.port = port;
         this.value2 = value2;
     }
 }
