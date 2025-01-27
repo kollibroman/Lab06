@@ -89,11 +89,7 @@ public class Tanker extends BaseSocketHandler implements ITanker
                 currentLoad += pumpedVolume;
                 System.out.println("Zebrano " + pumpedVolume + " nieczystości");
 
-                // Jeśli cysterna jest pełna, wywóz do oczyszczalni
-                if (currentLoad >= maxCapacity)
-                {
-                    transportToSewagePlant();
-                }
+                transportToSewagePlant();
 
                 var setRequest = new SetRequest("sr:", currentTankerNumber);
 

@@ -109,6 +109,8 @@ public class Office extends Thread implements IOffice
 
         System.out.println("Otrzymano żądanie: " + request);
 
+        //Znaleźć completableFeature i próbować to tym zrobić
+
         if (requestObj instanceof RegisterRequest registerRequest && registerRequest.getMethod().equals("r:"))
         {
             String host = registerRequest.getHost();
