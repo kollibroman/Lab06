@@ -31,7 +31,17 @@ public class TankerUI extends Application
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        new Thread(this::initializeTanker).start();
+        var thread = new Thread(() ->
+        {
+            initializeTanker();
+            Platform.runLater(() ->
+            {
+                updateOrderList("Tanker #" + tankerId + " is ready to serve");
+            });
+        });
+
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void initializeTanker()
@@ -40,7 +50,7 @@ public class TankerUI extends Application
         {
             int port = new Random().nextInt(1000, 9999);
             int maxCapacity = new Random().nextInt(300, 1000);
-            tanker = new Tanker(port, "localhost", 9001, "localhost", 9002, maxCapacity);
+            tanker = new Tanker(port, "localhost", 9001, "localhost", 9003, maxCapacity);
 
             tanker.registerInOffice();
             tankerId = tanker.getCurrentTankerNumber();

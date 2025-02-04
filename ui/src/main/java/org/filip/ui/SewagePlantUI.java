@@ -27,8 +27,7 @@ public class SewagePlantUI extends Application
     public void start(Stage primaryStage)
     {
         try {
-            sewagePlant = new SewagePlant(9003, "localhost", 9000);
-            sewagePlant.startServer();
+            sewagePlant = new SewagePlant(9003, "localhost", 9001);
         } catch (Exception e) {
             e.printStackTrace();
             showAlert("Error initializing SewagePlant: " + e.getMessage());
@@ -55,8 +54,20 @@ public class SewagePlantUI extends Application
         primaryStage.show();
 
         // Start periodic updates
-        startUIUpdates();
-        sewagePlant.startServer();
+//        startUIUpdates();
+//        sewagePlant.startServer();
+
+        var thread = new Thread(() ->
+        {
+            sewagePlant.startServer();
+            Platform.runLater(() ->
+            {
+                startUIUpdates();
+            });
+        });
+
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @SneakyThrows

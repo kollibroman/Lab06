@@ -44,7 +44,7 @@ public class OfficeUI extends Application
     public void start(Stage primaryStage)
     {
         // Initialize the Office
-        office = new Office(9000, "localhost", 9001);
+        office = new Office(9001, "localhost", 9003);
 
         // Setup UI
         VBox root = new VBox(10);
@@ -79,9 +79,17 @@ public class OfficeUI extends Application
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Start periodic UI updates
-        office.start();
-        startUIUpdates();
+        var thread = new Thread(() ->
+        {
+            office.start();
+            Platform.runLater(() ->
+            {
+                startUIUpdates();
+            });
+        });
+
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private TableView<TankerViewModel> createTankerTableView() {

@@ -39,8 +39,10 @@ public class HouseUI extends Application
     }
 
     @Override
-    public void start(Stage primaryStage) {
-        house = new House(100, 100, "localhost", 9001);
+    public void start(Stage primaryStage)
+    {
+        var rand = new Random();
+        house = new House(rand.nextInt(100,4000), 100, "localhost", 9001);
 
         // Setup UI
         VBox root = new VBox(10);
